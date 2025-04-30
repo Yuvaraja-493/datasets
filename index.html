@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Anti-Counterfeiting System</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+</head>
+<body>
+  <h2>Register Product</h2>
+  <input id="rName" placeholder="Product Name" />
+  <input id="rManufacturer" placeholder="Manufacturer" />
+  <input id="rBatch" placeholder="Batch ID" />
+  <button onclick="register()">Register</button>
+
+  <h2>Verify Product</h2>
+  <input id="vName" placeholder="Product Name" />
+  <input id="vManufacturer" placeholder="Manufacturer" />
+  <input id="vBatch" placeholder="Batch ID" />
+  <button onclick="verify()">Verify</button>
+  <p id="result"></p>
+
+  <script>
+    const contractAddress = "PASTE_DEPLOYED_CONTRACT_ADDRESS";
+    const abi = [ // SHORT ABI for demo
+      {
+        "inputs": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" },
+          { "internalType": "string", "name": "batchId", "type": "string" }
+        ],
+        "name": "registerProduct",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" },
+          { "internalType": "string", "name": "batchId", "type": "string" }
+        ],
+        "name": "verifyProduct",
+        "outputs": [
+          { "internalType": "bool", "name": "", "type": "bool" },
+          { "internalType": "uint256", "name": "", "type": "uint256" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    let provider, signer, contract;
+
+    async function connect() {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      contract = new ethers.Contract(contractAddress, abi, signer);
+    }
+
+    connect();
+
+    async function register() {
+      const name = document.getElementById('rName').value;
+      const manufacturer = document.getElementById('rManufacturer').value;
+      const batchId = document.getElementById('rBatch').value;
+      await contract.registerProduct(name, manufacturer, batchId);
+      alert("Product Registered Successfully!");
+    }
+
+    async function verify() {
+      const name = document.getElementById('vName').value;
+      const manufacturer = document.getElementById('vManufacturer').value;
+      const batchId = document.getElementById('vBatch').value;
+
+      const result = await contract.verifyProduct(name, manufacturer, batchId);
+      const display = document.getElementById('result');
+      if (result[0]) {
+        display.innerText = `✅ Authentic Product. Registered at: ${new Date(result[1] * 1000).toLocaleString()}`;
+      } else {
+        display.innerText = "❌ Product is NOT registered. May be counterfeit.";
+      }
+    }
+  </script>
+</body>
+</html>
